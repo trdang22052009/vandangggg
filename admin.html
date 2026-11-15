@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#11150d">
+<title>Quản trị bình chọn Tây Nam</title>
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+  * { box-sizing: border-box; }
+  body { min-height: 100vh; display: grid; place-items: center; padding: 1.25rem; }
+  .panel {
+    width: min(100%, 30rem); position: relative; z-index: 2;
+    padding: clamp(1.3rem, 5vw, 2rem); border: 1px solid var(--line);
+    background: rgba(23, 30, 17, .94); box-shadow: 0 1.5rem 4rem rgba(0,0,0,.45);
+    border-radius: .35rem;
+  }
+  .eyebrow { margin: 0 0 .65rem; color: var(--gold); font-family: var(--f-display); letter-spacing: .22em; text-transform: uppercase; }
+  h1 { margin: 0; font-family: var(--f-display); font-size: clamp(2rem, 8vw, 3rem); line-height: 1; text-transform: uppercase; }
+  .desc { color: var(--muted); line-height: 1.55; margin: 1rem 0 1.3rem; }
+  label { display: block; font-weight: 700; margin-bottom: .45rem; }
+  input {
+    width: 100%; padding: .9rem 1rem; border-radius: .25rem;
+    border: 1px solid var(--line); background: #10150d; color: var(--text);
+    font: inherit; font-size: 1rem;
+  }
+  button, .link-button {
+    display: inline-flex; justify-content: center; align-items: center; gap: .5rem;
+    border: 1px solid var(--gold); border-radius: .25rem; padding: .85rem 1rem;
+    background: var(--gold); color: #17190f; font: 700 1rem var(--f-body); cursor: pointer;
+    text-decoration: none; width: 100%; margin-top: .9rem;
+  }
+  button:disabled { opacity: .6; cursor: wait; }
+  .message { min-height: 1.5rem; margin: .85rem 0 0; color: var(--muted); line-height: 1.4; }
+  .message.error { color: #ff9b84; }
+  .message.good { color: #cde7a4; }
+  .hidden { display: none !important; }
+  .secondary { background: transparent; color: var(--text); border-color: var(--line); }
+  .foot { margin: 1.2rem 0 0; font-size: .82rem; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="bg-grid"></div><div class="bg-veil"></div><div class="bg-grain"></div>
+<main class="panel">
+  <p class="eyebrow">Bình chọn trực tiếp</p>
+  <h1>Quản trị<br>hệ thống</h1>
+  <p class="desc">Đăng nhập bằng mật khẩu quản trị để mở quyền khóa/mở bình chọn, hé lộ lịch sử và xóa toàn bộ phiếu.</p>
+
+  <form id="login-form">
+    <label for="password">Mật khẩu quản trị</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required minlength="1" placeholder="Nhập mật khẩu quản trị">
+    <button id="submit" type="submit">Đăng nhập và mở màn hình</button>
+    <p class="message" id="message" role="status" aria-live="polite"></p>
+  </form>
+
+  <section id="already" class="hidden">
+    <p class="message good">Bạn đang đăng nhập quyền quản trị trên trình duyệt này.</p>
+    <a class="link-button" href="/screen">Mở màn hình trình chiếu</a>
+    <button class="secondary" id="logout" type="button">Đăng xuất</button>
+  </section>
+  <p class="foot">Phiên quản trị tự hết hạn sau 12 giờ. Không chia sẻ mật khẩu cho người tham gia bình chọn.</p>
+</main>
+<script src="/assets/bg.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const form = $("login-form");
+  const msg = $("message");
+  function message(text, kind) { msg.textContent = text; msg.className = "message" + (kind ? " " + kind : ""); }
+
+  fetch("/api/info", { cache: "no-store" })
+    .then(r => r.json())
+    .then(info => {
+      if (info.admin) {
+        form.classList.add("hidden");
+        $("already").classList.remove("hidden");
+      }
+    })
+    .catch(() => message("Không kết nối được máy chủ. Hãy tải lại trang.", "error"));
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = $("submit");
+    button.disabled = true;
+    message("Đang xác thực…");
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: $("password").value })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        if (result.error === "rate_limited") throw new Error("Bạn đã nhập sai nhiều lần. Hãy thử lại sau 15 phút.");
+        throw new Error("Mật khẩu chưa đúng. Vui lòng kiểm tra và thử lại.");
+      }
+      message("Đăng nhập thành công. Đang mở màn hình…", "good");
+      window.location.replace("/screen");
+    } catch (error) {
+      message(error.message || "Không thể đăng nhập. Hãy thử lại.", "error");
+      button.disabled = false;
+    }
+  });
+
+  $("logout").addEventListener("click", async () => {
+    await fetch("/api/admin/logout", { method: "POST" }).catch(() => {});
+    window.location.reload();
+  });
+})();
+</script>
+</body>
+</html>

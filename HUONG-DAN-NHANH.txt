@@ -1,0 +1,10 @@
+BINH CHON TAY NAM - BAN MIEN PHI (dung trong 5 ngay)
+
+1) Giai nen ZIP, dua TOAN BO file ben trong thu muc tay-nam-vote-online len GOC cua 1 repo GitHub moi (render.yaml nam o goc).
+2) https://dashboard.render.com -> New -> Blueprint -> chon repo.
+3) Dien ADMIN_PASSWORD = mat khau rieng (>= 12 ky tu).
+4) Khi service bao Live: /admin dang nhap, /screen de chieu, /vote de binh chon.
+
+Web va database deu goi Free. Database Free het han sau 30 ngay (du cho 5 ngay).
+Web Free ngu sau 15 phut khong ai vao, mo lai mat ~1 phut: truoc khi chieu hay mo /screen som vai phut.
+Neu Render doi nhap the de tao Blueprint, xem file README.md muc "Neu da co Web Service" de tao thu cong.
