@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bình chọn Tây Nam — màn hình trình chiếu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&family=Courier+Prime:wght@400;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+  /* Bố cục: ba cột — điện khẩn | kết quả trực tiếp | mã QR. Cỡ chữ co giãn theo màn hình trình chiếu. */
+  html { font-size: max(10px, min(1.04vw, 1.85vh)); }
+
+  .stage {
+    position: relative; z-index: 2;
+    height: 100vh; height: 100dvh;
+    padding: 2rem 2.4rem 2.2rem;
+    display: grid;
+    gap: 1.5rem 1.8rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 0.85fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "top top top"
+      "dispatch results join";
+  }
+
+  /* ----- Đầu trang ----- */
+  .top { grid-area: top; display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; }
+  .brand { display: flex; align-items: center; gap: 1.2rem; min-width: 0; }
+  .seal {
+    flex: none; width: 4.4rem; height: 4.4rem; border-radius: 50%;
+    display: grid; place-items: center;
+    border: 2px solid var(--gold); color: var(--gold);
+    box-shadow: inset 0 0 0 0.3rem var(--night), inset 0 0 0 calc(0.3rem + 1px) rgba(232, 185, 74, 0.5);
+  }
+  .seal svg { width: 2rem; height: 2rem; }
+  .eyebrow {
+    margin: 0 0 0.25rem; font-family: var(--f-display); font-weight: 500;
+    font-size: 1.05rem; letter-spacing: 0.34em; text-transform: uppercase; color: var(--gold);
+  }
+  h1 {
+    margin: 0; font-family: var(--f-display); font-weight: 700;
+    font-size: 3.5rem; line-height: 1; letter-spacing: 0.02em; text-transform: uppercase;
+  }
+  h1 span { color: var(--muted); font-weight: 500; margin-left: 0.5rem; }
+
+  .counter { display: flex; align-items: center; gap: 1.2rem; flex: none; }
+  .counter .num {
+    font-family: var(--f-display); font-weight: 700; font-size: 5.2rem; line-height: 0.9;
+    font-variant-numeric: tabular-nums; min-width: 1.4ch; text-align: right;
+  }
+  .counter .cap {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
+    font-family: var(--f-display); font-weight: 500; font-size: 1.15rem;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  }
+  .counter .pill { font-size: 0.9rem; color: var(--text); }
+
+  /* ----- Điện khẩn và lịch sử (chồng lên nhau, đổi bằng lớp .is-history) ----- */
+  .dispatch { grid-area: dispatch; display: grid; min-height: 0; }
+  .dispatch > .card, .row { container-type: inline-size; }
+  .dispatch > .card {
+    grid-area: 1 / 1; min-height: 0; overflow: hidden;
+    padding: 1.9rem 2.1rem 2rem;
+    display: flex; flex-direction: column;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .card .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .card .head h2 {
+    margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 1.9rem;
+    letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .card .head .stamp { font-size: 1.35rem; white-space: nowrap; }
+
+  .meta { margin: 0.9rem 0 0; font-size: 1.02rem; line-height: 1.5; }
+  .meta b { font-weight: 700; }
+  .rule { border: 0; border-top: 2px dashed rgba(28, 26, 18, 0.5); margin: 1.1rem 0; }
+
+  .lines { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.9rem; }
+  .lines li {
+    font-size: 1.15rem; line-height: 1.5; padding-left: 1.4rem; position: relative;
+    animation: typein 0.85s steps(34) both;
+    animation-delay: calc(var(--i) * 0.6s + 0.5s);
+  }
+  .lines li::before { content: "\2014"; position: absolute; left: 0; }
+  .lines li b { font-weight: 700; }
+  @keyframes typein { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+  .ask { margin-top: auto; padding-top: 0.6rem; }
+  .ask p {
+    margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 1.4rem; line-height: 1.25;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .ask strong {
+    display: block; margin-top: 0.2rem; font-family: var(--f-display); font-weight: 700;
+    font-size: 4.2rem; font-size: min(6.4rem, 15.5cqw);
+    line-height: 1; letter-spacing: 0.01em; color: var(--red-deep);
+    text-transform: uppercase; white-space: nowrap;
+  }
+
+  .history { opacity: 0; transform: translateY(1.2rem); pointer-events: none; }
+  .telegram { opacity: 1; transform: none; }
+  .dispatch.is-history .telegram { opacity: 0; transform: translateY(-1.2rem); pointer-events: none; }
+  .dispatch.is-history .history { opacity: 1; transform: none; pointer-events: auto; }
+
+  .history h3 {
+    margin: 0.9rem 0 0; font-family: var(--f-display); font-weight: 700; font-size: 2.2rem;
+    line-height: 1.05; text-transform: uppercase; letter-spacing: 0.01em;
+  }
+  .timeline { list-style: none; margin: 1.1rem 0 0; padding: 0 0 0 1.6rem; position: relative; display: flex; flex-direction: column; gap: 1rem; }
+  .timeline::before { content: ""; position: absolute; left: 0.35rem; top: 0.4rem; bottom: 0.4rem; border-left: 2px solid var(--ink); opacity: 0.55; }
+  .timeline li { position: relative; }
+  .timeline li::before {
+    content: ""; position: absolute; left: -1.6rem; top: 0.2rem; width: 0.8rem; height: 0.8rem;
+    border-radius: 50%; background: var(--red-deep); box-shadow: 0 0 0 0.2rem var(--paper);
+  }
+  .timeline time {
+    display: block; font-family: var(--f-display); font-weight: 700; font-size: 1.5rem;
+    letter-spacing: 0.06em; color: var(--red-deep);
+  }
+  .timeline p { margin: 0.15rem 0 0; font-size: 1rem; line-height: 1.5; }
+  .source { margin-top: auto; padding-top: 1rem; font-size: 0.9rem; opacity: 0.8; }
+
+  /* ----- Kết quả trực tiếp ----- */
+  .results { grid-area: results; display: flex; flex-direction: column; gap: 1.2rem; min-height: 0; }
+  .label {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    font-family: var(--f-display); font-weight: 500; font-size: 1.05rem;
+    letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold);
+  }
+  .label::after { content: ""; flex: 1; border-top: 1px solid rgba(232, 185, 74, 0.4); order: 1; }
+  .label span { order: 0; }
+
+  .row {
+    flex: 1; min-height: 0; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center; gap: 0.9rem;
+    padding: 1.4rem 1.7rem 1.5rem;
+    background: rgba(25, 32, 18, 0.84);
+    border: 1px solid var(--line);
+    border-radius: 0.3rem;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35);
+  }
+  .row-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+  .who { min-width: 0; }
+  .who h2 {
+    margin: 0; font-family: var(--f-display); font-weight: 700;
+    font-size: 3.2rem; font-size: min(4.8rem, 9.5cqw);
+    line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; white-space: nowrap;
+  }
+  .who p { margin: 0.45rem 0 0; font-size: 1.05rem; color: var(--muted); }
+  .danh .who h2 { color: var(--red); }
+  .khong .who h2 { color: var(--blue); }
+
+  .lead {
+    font-family: var(--f-display); font-weight: 500; font-size: 0.95rem; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 0.25em 0.7em 0.2em; border: 1px solid var(--gold); color: var(--gold); border-radius: 0.2rem;
+  }
+  .lead[hidden] { display: none; }
+  .pct {
+    flex: none;
+    font-family: var(--f-display); font-weight: 700;
+    font-size: 5rem; font-size: min(7.4rem, 17cqw);
+    line-height: 0.85; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .pct small { font-size: 0.4em; font-weight: 500; margin-left: 0.1em; color: var(--muted); }
+
+  .track { height: 2.6rem; background: rgba(0, 0, 0, 0.45); border: 1px solid var(--line); overflow: hidden; }
+  .fill { display: block; height: 100%; width: 0; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .danh .fill {
+    background:
+      repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0 0.45rem, transparent 0.45rem 0.9rem),
+      var(--red);
+  }
+  .khong .fill {
+    background:
+      radial-gradient(rgba(0, 0, 0, 0.26) 0.13rem, transparent 0.15rem) 0 0 / 0.72rem 0.72rem,
+      var(--blue);
+  }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 1.15rem; color: var(--muted); }
+  .foot b { color: var(--text); font-family: var(--f-display); font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 0.3rem; }
+
+  .row.pulse { animation: pulse 0.7s ease; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(232, 185, 74, 0.55), 0 1rem 2rem rgba(0, 0, 0, 0.35); }
+    100% { box-shadow: 0 0 0 1.1rem rgba(232, 185, 74, 0), 0 1rem 2rem rgba(0, 0, 0, 0.35); }
+  }
+  .hint { margin: 0; text-align: center; font-size: 1.05rem; color: var(--muted); min-height: 1.5em; }
+
+  /* ----- Mã QR ----- */
+  .join {
+    grid-area: join; min-height: 0;
+    display: flex; flex-direction: column; align-items: stretch; gap: 1.1rem;
+    padding: 1.6rem 1.7rem 1.5rem;
+    border: 2px dashed rgba(232, 185, 74, 0.55);
+    border-radius: 0.3rem;
+    background: rgba(17, 21, 13, 0.7);
+  }
+  .join h2 {
+    margin: 0; text-align: center; font-family: var(--f-display); font-weight: 700;
+    font-size: 1.9rem; line-height: 1.08; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .qr { background: #fff; padding: 0.6rem; border-radius: 0.2rem; align-self: center; width: 100%; max-width: 19.5rem; aspect-ratio: 1; display: grid; }
+  .qr canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+  .qr-missing { margin: 0; padding: 1.2rem; text-align: center; color: var(--muted); font-size: 1.05rem; line-height: 1.5; }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 0.45rem; }
+  .steps li { counter-increment: s; display: flex; align-items: center; gap: 0.8rem; font-size: 1.05rem; }
+  .steps li::before {
+    content: counter(s); flex: none; width: 1.7rem; height: 1.7rem; display: grid; place-items: center;
+    border-radius: 50%; background: var(--gold); color: var(--night);
+    font-family: var(--f-display); font-weight: 700; font-size: 1rem;
+  }
+  .url {
+    margin-top: auto; text-align: center; font-family: var(--f-type); font-weight: 700;
+    font-size: 1.05rem; line-height: 1.35; word-break: break-all; color: var(--text);
+  }
+  .url select {
+    display: block; margin: 0.5rem auto 0; max-width: 100%;
+    background: var(--pine); color: var(--text); border: 1px solid var(--line); border-radius: 0.2rem;
+    font-family: var(--f-body); font-size: 0.9rem; padding: 0.3rem 0.5rem;
+  }
+
+  /* ----- Thanh điều khiển (chỉ quản trị viên đăng nhập thấy, tự ẩn khi nhàn rỗi) ----- */
+  .toolbar {
+    position: fixed; left: 50%; bottom: 1.2rem; transform: translateX(-50%); z-index: 20;
+    display: flex; gap: 0.6rem; padding: 0.6rem; border-radius: 0.5rem;
+    background: rgba(10, 13, 7, 0.9); border: 1px solid var(--line);
+    box-shadow: 0 1rem 2.4rem rgba(0, 0, 0, 0.6);
+    transition: opacity 0.4s ease;
+  }
+  .toolbar[hidden] { display: none; }
+  body.idle .toolbar { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
+  .toolbar button {
+    display: inline-flex; align-items: center; gap: 0.6rem; cursor: pointer;
+    padding: 0.55rem 0.95rem; font-size: 0.95rem; font-weight: 500;
+    background: var(--pine); border: 1px solid var(--line); border-radius: 0.3rem;
+  }
+  .toolbar button:hover { border-color: var(--gold); }
+  .toolbar button.armed { background: var(--red-deep); border-color: var(--red); }
+  .toolbar kbd {
+    font-family: var(--f-type); font-weight: 700; font-size: 0.8rem; color: var(--gold);
+    border: 1px solid rgba(232, 185, 74, 0.5); border-radius: 0.2rem; padding: 0 0.35rem;
+  }
+
+  /* ----- Màn hình gần vuông (4:3, 5:4): xếp lại thành hai cột ----- */
+  @media (max-aspect-ratio: 3/2) {
+    html { font-size: max(9px, min(1.05vw, 1.7vh)); }
+    .stage {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr);
+      grid-template-areas:
+        "top top"
+        "dispatch join"
+        "results results";
+    }
+    .row { padding: 1rem 1.3rem; }
+    .dispatch > .card { padding: 1.4rem 1.7rem 1.5rem; }
+    .lines { gap: 0.55rem; }
+    .lines li { font-size: 1rem; }
+    .ask p { font-size: 1.2rem; }
+    .ask strong { font-size: 3.6rem; font-size: min(5rem, 14cqw); }
+    .steps { display: none; }
+    .qr { max-width: 20rem; }
+    .results { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: 1rem 1.4rem; }
+    .results .label, .results .hint { grid-column: 1 / -1; }
+  }
+  @media (max-width: 760px) {
+    .stage { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "dispatch" "results" "join"; grid-template-rows: auto; padding: 1.2rem; }
+    .top { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <div class="bg-grid"></div>
+  <svg class="bg-border" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M -20 130 C 120 90, 170 250, 300 210 S 520 60, 640 190 S 790 420, 900 380 S 1010 560, 1030 600"></path>
+  </svg>
+  <div class="bg-veil"></div>
+  <div class="bg-grain"></div>
+
+  <main class="stage">
+    <header class="top">
+      <div class="brand">
+        <div class="seal" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.8l2.9 6.9 7.4.6-5.6 4.8 1.7 7.2L12 17.4 5.6 21.3l1.7-7.2L1.7 9.3l7.4-.6z"/></svg>
+        </div>
+        <div>
+          <p class="eyebrow">Phòng bình chọn trực tiếp</p>
+          <h1>Biên giới Tây Nam <span>1977–1979</span></h1>
+        </div>
+      </div>
+      <div class="counter">
+        <div class="num" id="total" data-v="0">0</div>
+        <div class="cap">
+          phiếu đã nhận
+          <span class="pill offline" id="status"><i></i><span id="status-text">Đang kết nối</span></span>
+        </div>
+      </div>
+    </header>
+
+    <section class="dispatch" id="dispatch">
+      <article class="card paper telegram" id="telegram">
+        <div class="head">
+          <h2>Điện khẩn</h2>
+          <span class="stamp">Khẩn</span>
+        </div>
+        <p class="meta type"><b>Nơi nhận:</b> Bộ chỉ huy mặt trận Tây Nam<br><b>Ngày:</b> 22-12-1978 &nbsp;·&nbsp; <b>Tây Ninh</b></p>
+        <hr class="rule">
+        <ul class="lines type">
+          <li style="--i:0">Từ 1975, quân Pol Pot liên tục xâm nhập, đánh chiếm đảo Phú Quốc và Thổ Chu.</li>
+          <li style="--i:1">30-4-1977, chúng tấn công dọc biên giới, tàn sát dân thường.</li>
+          <li style="--i:2">Việt Nam nhiều lần đề nghị thương lượng, tìm giải pháp hòa bình.</li>
+          <li style="--i:3"><b>Hôm nay:</b> 19 sư đoàn cùng pháo binh, xe tăng tràn vào Tây Ninh.</li>
+        </ul>
+        <div class="ask">
+          <p>Bạn là người ra quyết định. Việt Nam có nên</p>
+          <strong>Đánh trả?</strong>
+        </div>
+      </article>
+
+      <article class="card paper history" id="history" aria-hidden="true">
+        <div class="head">
+          <h2>Hồ sơ</h2>
+          <span class="stamp">Sự thật</span>
+        </div>
+        <h3>Lịch sử đã diễn ra như thế nào?</h3>
+        <ol class="timeline">
+          <li>
+            <time>30-4-1977</time>
+            <p>Quân Pol Pot tấn công dọc tuyến biên giới Tây Nam, tàn sát dân thường. Đảng và Nhà nước Việt Nam vẫn nỗ lực tìm giải pháp hòa bình.</p>
+          </li>
+          <li>
+            <time>22-12-1978</time>
+            <p>Pol Pot huy động 19 sư đoàn bộ binh cùng pháo binh, xe tăng tấn công quy mô lớn vào Tây Ninh.</p>
+          </li>
+          <li>
+            <time>7-1-1979</time>
+            <p>Thực hiện quyền tự vệ chính đáng, quân dân Việt Nam phản công. Theo yêu cầu của Mặt trận Đoàn kết dân tộc cứu nước Campuchia, quân tình nguyện Việt Nam cùng quân dân Campuchia đánh đổ chính quyền Pol Pot. Phnom Penh được giải phóng.</p>
+          </li>
+        </ol>
+        <p class="source type">Theo SGK Lịch sử: Các cuộc đấu tranh bảo vệ Tổ quốc từ sau tháng 4-1975.</p>
+      </article>
+    </section>
+
+    <section class="results" aria-live="polite">
+      <div class="label"><span>Kết quả trực tiếp</span></div>
+
+      <article class="row danh" id="row-danh">
+        <div class="row-top">
+          <div class="who">
+            <h2>Đánh</h2>
+            <p>Mở cuộc phản công</p>
+          </div>
+          <div class="pct"><span id="pct-danh" data-v="0">0</span><small>%</small></div>
+        </div>
+        <div class="track"><i class="fill" id="fill-danh"></i></div>
+        <div class="foot"><span><b id="cnt-danh" data-v="0">0</b> phiếu</span><span class="lead" id="lead-danh" hidden>Đang dẫn</span></div>
+      </article>
+
+      <article class="row khong" id="row-khong">
+        <div class="row-top">
+          <div class="who">
+            <h2>Không đánh</h2>
+            <p>Tiếp tục tìm giải pháp hòa bình</p>
+          </div>
+          <div class="pct"><span id="pct-khong" data-v="0">0</span><small>%</small></div>
+        </div>
+        <div class="track"><i class="fill" id="fill-khong"></i></div>
+        <div class="foot"><span><b id="cnt-khong" data-v="0">0</b> phiếu</span><span class="lead" id="lead-khong" hidden>Đang dẫn</span></div>
+      </article>
+
+      <p class="hint" id="hint">Đang chờ phiếu đầu tiên. Quét mã QR để bình chọn.</p>
+    </section>
+
+    <aside class="join">
+      <h2>Quét mã<br>để bình chọn</h2>
+      <div class="qr" id="qr-box"><canvas id="qr" aria-label="Mã QR dẫn tới trang bình chọn"></canvas></div>
+      <ol class="steps">
+        <li>Mở camera điện thoại</li>
+        <li>Hướng vào mã QR</li>
+        <li>Chạm vào lựa chọn của bạn</li>
+      </ol>
+      <div class="url">
+        <span id="url-text">&nbsp;</span>
+        <select id="url-select" aria-label="Chọn địa chỉ mạng cho mã QR" hidden></select>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <button type="button" id="btn-open"><kbd>O</kbd><span id="btn-open-text">Khóa bình chọn</span></button>
+    <button type="button" id="btn-reveal"><kbd>H</kbd><span id="btn-reveal-text">Hé lộ lịch sử</span></button>
+    <button type="button" id="btn-reset"><kbd>R</kbd><span id="btn-reset-text">Xóa phiếu</span></button>
+    <button type="button" id="btn-full"><kbd>F</kbd><span>Toàn màn hình</span></button>
+    <button type="button" id="btn-logout"><span>Thoát quản trị</span></button>
+  </div>
+
+  <script src="/assets/bg.js"></script>
+  <script src="/assets/qr.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+
+    /* ----- Số nhảy mượt ----- */
+    function tween(el, to, fmt) {
+      fmt = fmt || String;
+      var from = Number(el.dataset.v || 0);
+      if (from === to) { el.textContent = fmt(to); return; }
+      el.dataset.v = String(to);
+      var token = (el._tw = (el._tw || 0) + 1);
+      var t0 = performance.now(), dur = 700;
+      function step(t) {
+        if (el._tw !== token) return;
+        var k = Math.min(1, (t - t0) / dur);
+        var e = 1 - Math.pow(1 - k, 3);
+        el.textContent = fmt(Math.round(from + (to - from) * e));
+        if (k < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    /* ----- Hiển thị kết quả ----- */
+    var last = null;
+    var admin = false;
+
+    function render(s) {
+      var d = s.counts.danh, k = s.counts.khong, total = d + k;
+      var pd = total ? Math.round((d / total) * 100) : 0;
+      var pk = total ? 100 - pd : 0;
+
+      tween($("total"), total);
+      tween($("cnt-danh"), d);
+      tween($("cnt-khong"), k);
+      tween($("pct-danh"), pd);
+      tween($("pct-khong"), pk);
+      $("fill-danh").style.width = (total ? (d / total) * 100 : 0) + "%";
+      $("fill-khong").style.width = (total ? (k / total) * 100 : 0) + "%";
+
+      $("lead-danh").hidden = !(d > k);
+      $("lead-khong").hidden = !(k > d);
+
+      $("hint").textContent = total === 0
+        ? "Đang chờ phiếu đầu tiên. Quét mã QR để bình chọn."
+        : (s.open ? "Mỗi điện thoại một phiếu. Có thể đổi lựa chọn cho đến khi khóa." : "Đã khóa bình chọn. Không nhận thêm phiếu.");
+
+      var st = $("status");
+      st.classList.remove("offline");
+      st.classList.toggle("closed", !s.open);
+      $("status-text").textContent = s.open ? "Đang mở" : "Đã khóa";
+
+      $("dispatch").classList.toggle("is-history", !!s.reveal);
+      $("history").setAttribute("aria-hidden", s.reveal ? "false" : "true");
+
+      $("btn-open-text").textContent = s.open ? "Khóa bình chọn" : "Mở lại bình chọn";
+      $("btn-reveal-text").textContent = s.reveal ? "Quay lại điện khẩn" : "Hé lộ lịch sử";
+
+      if (last) {
+        if (d > last.counts.danh) bump("row-danh");
+        if (k > last.counts.khong) bump("row-khong");
+      }
+      last = s;
+    }
+
+    function bump(id) {
+      var el = $(id);
+      el.classList.remove("pulse");
+      void el.offsetWidth;
+      el.classList.add("pulse");
+    }
+
+    /* ----- Kết nối thời gian thực ----- */
+    function connect() {
+      var es = new EventSource("/api/stream");
+      es.addEventListener("state", function (e) {
+        try { render(JSON.parse(e.data)); } catch (_) { /* bỏ qua gói lỗi */ }
+      });
+      es.onerror = function () {
+        var st = $("status");
+        st.classList.add("offline");
+        $("status-text").textContent = "Mất kết nối";
+      };
+    }
+
+    /* ----- Mã QR ----- */
+    var urls = [];
+    function showQr(url) {
+      var box = $("qr-box");
+      var canvas = $("qr");
+      try {
+        QR.draw(canvas, url, 640, "M");
+        canvas.hidden = false;
+        var old = box.querySelector(".qr-missing");
+        if (old) old.remove();
+      } catch (e) {
+        canvas.hidden = true;
+      }
+      $("url-text").textContent = url.replace(/^https?:\/\//, "");
+    }
+
+    function noNetwork() {
+      var box = $("qr-box");
+      $("qr").hidden = true;
+      var p = document.createElement("p");
+      p.className = "qr-missing";
+      p.textContent = "Chưa xác định được địa chỉ Internet. Hãy tải lại trang hoặc kiểm tra cấu hình máy chủ.";
+      box.appendChild(p);
+      $("url-text").textContent = "";
+    }
+
+    function loadInfo() {
+      return fetch("/api/info", { cache: "no-store" })
+        .then(function (r) { return r.json(); })
+        .then(function (info) {
+          admin = !!info.admin;
+          $("toolbar").hidden = !admin;
+          urls = info.urls || [];
+          if (!urls.length) { noNetwork(); return; }
+          var sel = $("url-select");
+          if (urls.length > 1 && admin) {
+            sel.hidden = false;
+            urls.forEach(function (u, i) {
+              var o = document.createElement("option");
+              o.value = String(i);
+              o.textContent = u.label + " — " + u.url.replace(/^https?:\/\//, "");
+              sel.appendChild(o);
+            });
+            sel.addEventListener("change", function () { showQr(urls[Number(sel.value)].url); });
+          }
+          showQr(urls[0].url);
+        })
+        .catch(function () { noNetwork(); });
+    }
+
+    /* ----- Điều khiển ----- */
+    function act(action) {
+      return fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: action })
+      });
+    }
+
+    var resetArmed = false, resetTimer = null;
+    function disarm() {
+      resetArmed = false;
+      $("btn-reset").classList.remove("armed");
+      $("btn-reset-text").textContent = "Xóa phiếu";
+    }
+    function doReset() {
+      if (!resetArmed) {
+        resetArmed = true;
+        $("btn-reset").classList.add("armed");
+        $("btn-reset-text").textContent = "Bấm lại để xóa hết phiếu";
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(disarm, 4000);
+        return;
+      }
+      clearTimeout(resetTimer);
+      disarm();
+      act("reset");
+    }
+    function toggleOpen() { if (last) act(last.open ? "close" : "open"); }
+    function toggleReveal() { if (last) act(last.reveal ? "hide" : "reveal"); }
+    function fullscreen() {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+    }
+
+    $("btn-open").addEventListener("click", toggleOpen);
+    $("btn-reveal").addEventListener("click", toggleReveal);
+    $("btn-reset").addEventListener("click", doReset);
+    $("btn-full").addEventListener("click", fullscreen);
+    $("btn-logout").addEventListener("click", function () {
+      fetch("/api/admin/logout", { method: "POST" })
+        .then(function () { window.location.href = "/admin"; })
+        .catch(function () { window.location.href = "/admin"; });
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      var tag = (e.target && e.target.tagName) || "";
+      if (tag === "SELECT" || tag === "INPUT") return;
+      if (!admin) return;
+      var key = e.key.toLowerCase();
+      if (key === "o") toggleOpen();
+      else if (key === "h") toggleReveal();
+      else if (key === "r") doReset();
+      else if (key === "f") fullscreen();
+    });
+
+    /* ----- Tự ẩn thanh điều khiển khi không dùng ----- */
+    var idleTimer = null;
+    function wake() {
+      document.body.classList.remove("idle");
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () { document.body.classList.add("idle"); }, 4000);
+    }
+    ["mousemove", "mousedown", "keydown", "touchstart"].forEach(function (ev) {
+      window.addEventListener(ev, wake, { passive: true });
+    });
+    wake();
+
+    loadInfo();
+    connect();
+  })();
+  </script>
+</body>
+</html>

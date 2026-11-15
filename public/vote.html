@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#11150d">
+<title>Bình chọn Tây Nam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&family=Courier+Prime:wght@400;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+  body { min-height: 100vh; min-height: 100dvh; }
+
+  .wrap {
+    position: relative; z-index: 2;
+    max-width: 30rem; margin: 0 auto;
+    padding-block: max(1rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-bottom));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+  .bar .name {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-family: var(--f-display); font-weight: 500; font-size: 0.85rem;
+    letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold);
+  }
+  .bar .name svg { width: 1.1rem; height: 1.1rem; flex: none; }
+  .bar .pill { font-size: 0.72rem; }
+
+  h1 {
+    margin: 0.3rem 0 0; font-family: var(--f-display); font-weight: 700;
+    font-size: 2.3rem; line-height: 1.02; letter-spacing: 0.01em; text-transform: uppercase;
+    text-wrap: balance;
+  }
+  h1 em { display: block; font-style: normal; color: var(--gold); font-size: 3.6rem; line-height: 0.95; }
+  .when { margin: 0.5rem 0 0; font-size: 0.95rem; color: var(--muted); }
+
+  .choices { display: flex; flex-direction: column; gap: 0.8rem; }
+  .choice {
+    position: relative; width: 100%; text-align: left; cursor: pointer;
+    display: grid; gap: 0.15rem;
+    padding: 2.6rem 1.2rem 1.15rem;
+    border: 0; border-radius: 0.35rem;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s ease, opacity 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 0.6rem 1.4rem rgba(0, 0, 0, 0.45);
+  }
+  .choice:active { transform: scale(0.985); }
+  .choice .name {
+    font-family: var(--f-display); font-weight: 700; font-size: 2.7rem; line-height: 1;
+    letter-spacing: 0.02em; text-transform: uppercase;
+  }
+  .choice .sub { font-size: 0.95rem; font-weight: 500; opacity: 0.92; }
+  .choice .tag {
+    position: absolute; left: 1.2rem; top: 0.85rem; display: flex; align-items: center;
+    font-family: var(--f-display); font-weight: 500; font-size: 0.8rem;
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .choice .hint { opacity: 0.8; padding: 0.3em 0 0.22em; }
+  .choice .mark {
+    display: none; align-items: center; gap: 0.4rem;
+    padding: 0.3em 0.8em 0.22em 0.65em; border-radius: 999px; background: rgba(255, 255, 255, 0.94); color: var(--ink);
+  }
+  .choice .mark svg { width: 0.9rem; height: 0.9rem; }
+  .choice.is-mine .hint { display: none; }
+
+  .choice.danh {
+    color: #fff6e2;
+    background:
+      repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.16) 0 0.5rem, transparent 0.5rem 1rem),
+      var(--red);
+  }
+  .choice.khong {
+    color: #0c1a22;
+    background:
+      radial-gradient(rgba(0, 0, 0, 0.2) 0.13rem, transparent 0.15rem) 0 0 / 0.72rem 0.72rem,
+      var(--blue);
+  }
+  .choice.is-mine { box-shadow: 0 0 0 3px var(--gold), 0 0.6rem 1.4rem rgba(0, 0, 0, 0.45); }
+  .choice.is-mine .mark { display: inline-flex; }
+  .choices.locked .hint { display: none; }
+  .choices.has-vote .choice:not(.is-mine) { opacity: 0.5; }
+  .choices.locked .choice { cursor: default; }
+  .choices.locked .choice:active { transform: none; }
+  .choices.busy .choice { pointer-events: none; }
+
+  .note { margin: 0; font-size: 0.98rem; line-height: 1.5; color: var(--text); min-height: 3em; }
+  .note b { font-family: var(--f-display); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  details.tg { padding: 1.1rem 1.2rem; border-radius: 0.2rem; }
+  details.tg summary {
+    cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  details.tg summary::-webkit-details-marker { display: none; }
+  details.tg summary::after { content: "+"; font-size: 1.6rem; line-height: 1; }
+  details.tg[open] summary::after { content: "\2212"; }
+  details.tg .stamp { font-size: 0.95rem; margin-right: auto; margin-left: 0.8rem; }
+  .tg-body { margin-top: 0.9rem; }
+  .tg-body .meta { margin: 0 0 0.6rem; font-size: 0.9rem; line-height: 1.5; }
+  .tg-body ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+  .tg-body li { position: relative; padding-left: 1.2rem; font-size: 0.95rem; line-height: 1.5; }
+  .tg-body li::before { content: "\2014"; position: absolute; left: 0; }
+
+  .history { padding: 1.3rem 1.2rem 1.3rem; border-radius: 0.2rem; scroll-margin-top: 1rem; animation: rise 0.6s ease both; }
+  .history[hidden] { display: none; }
+  @keyframes rise { from { opacity: 0; transform: translateY(0.8rem); } to { opacity: 1; transform: none; } }
+  .history .stamp { font-size: 1rem; }
+  .history h2 {
+    margin: 0.9rem 0 0; font-family: var(--f-display); font-weight: 700; font-size: 1.8rem;
+    line-height: 1.05; text-transform: uppercase;
+  }
+  .timeline { list-style: none; margin: 1rem 0 0; padding: 0 0 0 1.4rem; position: relative; display: flex; flex-direction: column; gap: 1rem; }
+  .timeline::before { content: ""; position: absolute; left: 0.3rem; top: 0.4rem; bottom: 0.4rem; border-left: 2px solid var(--ink); opacity: 0.55; }
+  .timeline li { position: relative; }
+  .timeline li::before {
+    content: ""; position: absolute; left: -1.4rem; top: 0.3rem; width: 0.7rem; height: 0.7rem;
+    border-radius: 50%; background: var(--red-deep); box-shadow: 0 0 0 0.18rem var(--paper);
+  }
+  .timeline time { display: block; font-family: var(--f-display); font-weight: 700; font-size: 1.2rem; letter-spacing: 0.06em; color: var(--red-deep); }
+  .timeline p { margin: 0.1rem 0 0; font-size: 0.95rem; line-height: 1.5; }
+  .source { margin: 1rem 0 0; font-size: 0.8rem; opacity: 0.8; }
+
+  .toast {
+    position: fixed; z-index: 30; left: 50%; bottom: max(1rem, env(safe-area-inset-bottom));
+    transform: translate(-50%, 140%); opacity: 0; pointer-events: none; transition: transform 0.3s ease, opacity 0.3s ease;
+    max-width: calc(100% - 2rem); padding: 0.7rem 1rem; border-radius: 0.4rem;
+    background: var(--ink); color: var(--paper); border: 1px solid var(--gold); font-size: 0.92rem; text-align: center;
+  }
+  .toast.show { transform: translate(-50%, 0); opacity: 1; }
+</style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <div class="bg-grid"></div>
+  <svg class="bg-border" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M -20 130 C 120 90, 170 250, 300 210 S 520 60, 640 190 S 790 420, 900 380 S 1010 560, 1030 600"></path>
+  </svg>
+  <div class="bg-veil"></div>
+  <div class="bg-grain"></div>
+
+  <main class="wrap">
+    <header class="bar">
+      <div class="name">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.8l2.9 6.9 7.4.6-5.6 4.8 1.7 7.2L12 17.4 5.6 21.3l1.7-7.2L1.7 9.3l7.4-.6z"/></svg>
+        Bình chọn trực tiếp
+      </div>
+      <span class="pill offline" id="status"><i></i><span id="status-text">Đang kết nối</span></span>
+    </header>
+
+    <section>
+      <h1>Việt Nam có nên <em>đánh trả?</em></h1>
+      <p class="when">22-12-1978, Tây Ninh: 19 sư đoàn Pol Pot tràn qua biên giới.</p>
+    </section>
+
+    <div class="choices" id="choices">
+      <button type="button" class="choice danh" data-choice="danh">
+        <span class="tag"><span class="hint">Chạm để chọn</span><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Phiếu của bạn</span></span>
+        <span class="name">Đánh</span>
+        <span class="sub">Mở cuộc phản công</span>
+      </button>
+      <button type="button" class="choice khong" data-choice="khong">
+        <span class="tag"><span class="hint">Chạm để chọn</span><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Phiếu của bạn</span></span>
+        <span class="name">Không đánh</span>
+        <span class="sub">Tiếp tục tìm giải pháp hòa bình</span>
+      </button>
+    </div>
+
+    <p class="note" id="note" aria-live="polite">Chạm vào một lựa chọn để gửi phiếu. Mỗi điện thoại một phiếu.</p>
+
+    <details class="paper tg">
+      <summary>Điện khẩn <span class="stamp">Khẩn</span></summary>
+      <div class="tg-body type">
+        <p class="meta"><b>Nơi nhận:</b> Bộ chỉ huy mặt trận Tây Nam<br><b>Ngày:</b> 22-12-1978 · <b>Tây Ninh</b></p>
+        <ul>
+          <li>Từ 1975, quân Pol Pot liên tục xâm nhập, đánh chiếm đảo Phú Quốc và Thổ Chu.</li>
+          <li>30-4-1977, chúng tấn công dọc biên giới, tàn sát dân thường.</li>
+          <li>Việt Nam nhiều lần đề nghị thương lượng, tìm giải pháp hòa bình.</li>
+          <li><b>Hôm nay:</b> 19 sư đoàn cùng pháo binh, xe tăng tràn vào Tây Ninh.</li>
+        </ul>
+      </div>
+    </details>
+
+    <section class="paper history" id="history" hidden>
+      <span class="stamp">Sự thật</span>
+      <h2>Lịch sử đã diễn ra như thế nào?</h2>
+      <ol class="timeline">
+        <li>
+          <time>30-4-1977</time>
+          <p>Quân Pol Pot tấn công dọc tuyến biên giới Tây Nam, tàn sát dân thường. Đảng và Nhà nước Việt Nam vẫn nỗ lực tìm giải pháp hòa bình.</p>
+        </li>
+        <li>
+          <time>22-12-1978</time>
+          <p>Pol Pot huy động 19 sư đoàn bộ binh cùng pháo binh, xe tăng tấn công quy mô lớn vào Tây Ninh.</p>
+        </li>
+        <li>
+          <time>7-1-1979</time>
+          <p>Thực hiện quyền tự vệ chính đáng, quân dân Việt Nam phản công. Theo yêu cầu của Mặt trận Đoàn kết dân tộc cứu nước Campuchia, quân tình nguyện Việt Nam cùng quân dân Campuchia đánh đổ chính quyền Pol Pot. Phnom Penh được giải phóng.</p>
+        </li>
+      </ol>
+      <p class="source type">Theo SGK Lịch sử: Các cuộc đấu tranh bảo vệ Tổ quốc từ sau tháng 4-1975.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="/assets/bg.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var NAMES = { danh: "Đánh", khong: "Không đánh" };
+
+    /* ----- Mã máy: mỗi điện thoại một phiếu ----- */
+    var KEY = "tn-voter-id";
+    function makeId() {
+      try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID().replace(/-/g, ""); } catch (e) {}
+      var s = "";
+      for (var i = 0; i < 32; i++) s += Math.floor(Math.random() * 16).toString(16);
+      return s;
+    }
+    function getId() {
+      try {
+        var v = localStorage.getItem(KEY);
+        if (v && /^[A-Za-z0-9_-]{8,64}$/.test(v)) return v;
+      } catch (e) {}
+      var id = makeId();
+      try { localStorage.setItem(KEY, id); } catch (e) {}
+      return id;
+    }
+    var ID = getId();
+
+    var S = { open: true, reveal: false, epoch: null, mine: null, online: false };
+    var busy = false, wasRevealed = false;
+
+    /* ----- Thông báo nhỏ ----- */
+    var toastTimer = null;
+    function toast(msg) {
+      var t = $("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+    }
+
+    /* ----- Vẽ giao diện theo trạng thái ----- */
+    function render() {
+      var box = $("choices");
+      box.classList.toggle("has-vote", !!S.mine);
+      box.classList.toggle("locked", !S.open);
+      box.classList.toggle("busy", busy);
+      Array.prototype.forEach.call(box.querySelectorAll(".choice"), function (b) {
+        var mine = b.getAttribute("data-choice") === S.mine;
+        b.classList.toggle("is-mine", mine);
+        b.setAttribute("aria-pressed", mine ? "true" : "false");
+        b.disabled = !S.open;
+      });
+
+      var note = $("note");
+      note.textContent = "";
+      var name = S.mine ? NAMES[S.mine] : "";
+      if (S.open && !S.mine) {
+        note.textContent = "Chạm vào một lựa chọn để gửi phiếu. Mỗi điện thoại một phiếu.";
+      } else if (S.open && S.mine) {
+        note.appendChild(document.createTextNode("Đã ghi nhận phiếu của bạn: "));
+        var b = document.createElement("b"); b.textContent = name; note.appendChild(b);
+        note.appendChild(document.createTextNode(". Muốn đổi, chạm vào lựa chọn còn lại."));
+      } else if (!S.open && S.mine) {
+        note.appendChild(document.createTextNode("Đã khóa bình chọn. Phiếu của bạn: "));
+        var b2 = document.createElement("b"); b2.textContent = name; note.appendChild(b2);
+        note.appendChild(document.createTextNode("."));
+      } else {
+        note.textContent = "Bình chọn đã khóa. Bạn chưa gửi phiếu.";
+      }
+
+      var st = $("status");
+      st.classList.toggle("offline", !S.online);
+      st.classList.toggle("closed", S.online && !S.open);
+      $("status-text").textContent = !S.online ? "Đang kết nối" : (S.open ? "Đang mở" : "Đã khóa");
+
+      var h = $("history");
+      h.hidden = !S.reveal;
+      if (S.reveal && !wasRevealed) {
+        setTimeout(function () { try { h.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} }, 150);
+      }
+      wasRevealed = S.reveal;
+    }
+
+    function applyState(s) {
+      if (S.epoch !== null && s.epoch !== S.epoch) S.mine = null; // giáo viên đã xóa phiếu, bắt đầu lại
+      S.epoch = s.epoch;
+      S.open = !!s.open;
+      S.reveal = !!s.reveal;
+    }
+
+    /* ----- Gửi phiếu ----- */
+    function vote(choice) {
+      if (busy || !S.open) return;
+      if (S.mine === choice) { toast("Bạn đã chọn \"" + NAMES[choice] + "\" rồi."); return; }
+      busy = true; render();
+      fetch("/api/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: ID, choice: choice })
+      })
+        .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+        .then(function (res) {
+          busy = false;
+          if (res.body && res.body.ok) {
+            S.mine = res.body.mine;
+            if (res.body.epoch) S.epoch = res.body.epoch;
+            try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+          } else if (res.body && res.body.error === "closed") {
+            S.open = false;
+            toast("Bình chọn vừa được khóa.");
+          } else {
+            toast("Chưa gửi được phiếu. Hãy thử lại.");
+          }
+          render();
+        })
+        .catch(function () {
+          busy = false; render();
+          toast("Mất kết nối. Kiểm tra Wi-Fi rồi chạm lại.");
+        });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll(".choice"), function (b) {
+      b.addEventListener("click", function () { vote(b.getAttribute("data-choice")); });
+    });
+
+    /* ----- Khởi động: lấy phiếu cũ của máy này, rồi nghe cập nhật trực tiếp ----- */
+    function connect() {
+      var es = new EventSource("/api/stream");
+      es.addEventListener("state", function (e) {
+        try { applyState(JSON.parse(e.data)); } catch (_) { return; }
+        S.online = true; render();
+      });
+      es.onerror = function () { S.online = false; render(); };
+    }
+
+    fetch("/api/state?id=" + encodeURIComponent(ID), { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (s) { applyState(s); S.mine = s.mine || null; render(); })
+      .catch(function () { /* SSE sẽ cập nhật sau */ })
+      .then(connect);
+
+    render();
+  })();
+  </script>
+</body>
+</html>
